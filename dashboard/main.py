@@ -1,68 +1,120 @@
 import dash
-from dash import dcc, html
+from dash import html, dcc
 from dash.dependencies import Input, Output
 import plotly.express as px
+import dash_bootstrap_components as dbc
 import pandas as pd
 
-data = [
-    {'carbohydrates_100g': 0.01, 'energy-kcal_100g': 0.17, 'proteins_100g': 0.44, 'salt_100g': 0.08,
-     'saturated-fat_100g': 0.17, 'sugars_100g': 0.01, 'insaturated-fat_100g': 0.16, 'price_100g': None, 'categoria': 1},
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
+                meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1.0'}])
 
-    {'carbohydrates_100g': 0.00, 'energy-kcal_100g': 0.23, 'proteins_100g': 0.44, 'salt_100g': 0.08,
-     'saturated-fat_100g': 0.25, 'sugars_100g': 0.00, 'insaturated-fat_100g': 0.27, 'price_100g': None, 'categoria': 0},
+app.layout = dbc.Container([
+    dbc.Row([
+        dbc.Col(
+            html.H1("Clasificación de Jamones", className="text-center"),
+            width=12)
+    ], style={'margin-top': '40px', 'margin-bottom': '30px'}),
 
-    {'carbohydrates_100g': 0.01, 'energy-kcal_100g': 0.15, 'proteins_100g': 0.44, 'salt_100g': 0.09,
-     'saturated-fat_100g': 0.11, 'sugars_100g': 0.01, 'insaturated-fat_100g': 0.12, 'price_100g': 0.03, 'categoria': 1},
+    dbc.Row([
+        dbc.Col(
+            html.Label("Ingresar nutrientes del jamón:"),
+            width=3, style={'text-align': 'center', 'margin': 'auto'}
+        ),
 
-    {'carbohydrates_100g': 0.01, 'energy-kcal_100g': 0.23, 'proteins_100g': 0.44, 'salt_100g': 0.09,
-     'saturated-fat_100g': 0.26, 'sugars_100g': 0.01, 'insaturated-fat_100g': 0.29, 'price_100g': 0.05, 'categoria': 2},
+        dbc.Col([
+            dbc.Row([
+                dbc.Col(dcc.Input(
+                    id="calories".format("number"),
+                    type="number",
+                    placeholder="KiloCalorias".format("number")
+                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
 
-    {'carbohydrates_100g': 0.00, 'energy-kcal_100g': 0.22, 'proteins_100g': 0.48, 'salt_100g': 0.07,
-     'saturated-fat_100g': 0.21, 'sugars_100g': 0.00, 'insaturated-fat_100g': 0.26, 'price_100g': 0.52, 'categoria': 3}
-]
+                dbc.Col(dcc.Input(
+                    id="proteins".format("number"),
+                    type="number",
+                    placeholder="Proteinas".format("number")
+                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
 
-app = dash.Dash(__name__)
+                dbc.Col(dcc.Input(
+                    id="carbohydrates".format("number"),
+                    type="number",
+                    placeholder="Carbohidratos".format("number")
+                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
 
-app.layout = html.Div([
-    html.H1("Clasificación de Jamones Dashboard"),
+                dbc.Col(dcc.Input(
+                    id="salt".format("number"),
+                    type="number",
+                    placeholder="Sal".format("number")
+                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
+            ], style={'margin-bottom': '10px'}),
 
-    dcc.Graph(
-        id='scatter-plot',
-        figure=px.scatter_3d(data, x='proteins_100g', y='salt_100g', z='carbohydrates_100g', color='categoria',
-                             title='Clusters de Jamones')
-    ),
+            dbc.Row([
+                dbc.Col(dcc.Input(
+                    id="sugar".format("number"),
+                    type="number",
+                    placeholder="Azucar".format("number")
+                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
 
-    html.Label("Ingresar Macronutrientes del Jamón:"),
-    dcc.Input(id='input-proteina', type='number', placeholder='Proteína'),
-    dcc.Input(id='input-salt', type='number', placeholder='salt_100g'),
-    dcc.Input(id='input-carbohidratos', type='number', placeholder='carbohydrates_100g'),
+                dbc.Col(dcc.Input(
+                    id="saturated_fat".format("number"),
+                    type="number",
+                    placeholder="Grasas saturadas".format("number")
+                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
 
-    html.Div(id='output-prediction', style={'margin-top': 20}),
+                dbc.Col(dcc.Input(
+                    id="insaturated_fat".format("number"),
+                    type="number",
+                    placeholder="Grasas insaturadas".format("number")
+                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
+                dbc.Col(width=3)
+            ], style={'margin-bottom': '10px'})
+        ],
+        width=9),
+    ], style={'margin-bottom': '10px'}),
+
+    dbc.Row([
+        dbc.Col(width=3),
+        dbc.Col(
+            html.Div(
+                dbc.Button("Calcular", id="calculate-button", color="primary", className="d-grid gap-2"),
+                className="d-grid gap-2"
+            ),
+            width=6),
+        dbc.Col(width=3)
+    ], style={'margin-bottom': '20px'}),
+
+    dbc.Row([
+        dbc.Col(width=3),
+        dbc.Col(
+            html.Div([
+                dcc.Graph(id="polar-chart"),
+            ], className="d-grid gap-2")),
+        dbc.Col(width=3)
+    ])
 ])
 
 @app.callback(
-    Output('scatter-plot', 'figure'),
-    [Input('input-proteina', 'value'),
-     Input('input-salt', 'value'),
-     Input('input-carbohidratos', 'value')]
+    Output("polar-chart", "figure"),
+    [Input("calculate-button", "n_clicks")]
 )
+def update_output(n_clicks):
+    if n_clicks is None or n_clicks == 0:
+        # Return an empty figure if the button hasn't been clicked
+        return px.line_polar()
 
-def update_scatter_plot(proteina, salt_100g, carbohidratos):
+    df = pd.DataFrame(dict(
+        values = [8, 12, 7, 14, 10, 12, 8,
+                  10, 3, 10, 10, 9, 13, 8],
+        variable = ['Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías',
+                    'Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías'],
+        ham=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
+               'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',  'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
+    print(df)
+    fig = px.line_polar(df, r='values', theta='variable', line_close=True,
+                        color='ham')
+    fig.update_traces(fill='toself')
 
-    fig = px.scatter_3d(data, x='proteins_100g', y='salt_100g', z='carbohydrates_100g', color='categoria',
-                        title='Clusters de Jamones')
     return fig
-
-
-@app.callback(
-    Output('output-prediction', 'children'),
-    [Input('input-proteina', 'value'),
-     Input('input-salt', 'value'),
-     Input('input-carbohidratos', 'value')]
-)
-def update_prediction(proteina, salt, carbohidratos):
-    prediction = 0
-    return f"El jamón ingresado pertenece al cluster: {prediction}"
 
 
 if __name__ == '__main__':
