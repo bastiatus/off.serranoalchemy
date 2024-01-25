@@ -1,9 +1,14 @@
 import dash
 from dash import html, dcc
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import plotly.express as px
 import dash_bootstrap_components as dbc
 import pandas as pd
+import joblib
+import numpy as np
+
+model = joblib.load('model.pkl')
+scaler = joblib.load('scaler.pkl')
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
                 meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1.0'}])
@@ -95,12 +100,43 @@ app.layout = dbc.Container([
 
 @app.callback(
     Output("polar-chart", "figure"),
-    [Input("calculate-button", "n_clicks")]
+    [Input("calculate-button", "n_clicks")],
+     [State("calories", "value"),
+     State("proteins", "value"),
+     State("carbohydrates", "value"),
+     State("salt", "value"),
+     State("sugar", "value"),
+     State("saturated_fat", "value"),
+     State("insaturated_fat", "value")
+     ]
 )
-def update_output(n_clicks):
+def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, saturated_fat, insaturated_fat):
     if n_clicks is None or n_clicks == 0:
-        # Return an empty figure if the button hasn't been clicked
         return px.line_polar()
+    else:
+        dict_ = {
+            "carbohydrates_100g": [carbohydrates],
+            "energy-kcal_100g": [calories],
+            "proteins_100g": [proteins],
+            "salt_100g": [salt],
+            "saturated-fat_100g": [saturated_fat],
+            "sugars_100g": [sugar],
+            "insaturated-fat_100g": [insaturated_fat]
+        }
+
+        feature_names = ["carbohydrates_100g", "energy-kcal_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
+                         "sugars_100g", "insaturated-fat_100g"]
+
+        input_values = np.array([carbohydrates, calories, proteins, salt, saturated_fat, sugar, insaturated_fat])
+        input_data = pd.DataFrame([input_values], columns=feature_names)
+
+        scaled_input = scaler.transform(input_data)
+        scaled_input = pd.DataFrame(scaled_input, columns=feature_names)
+
+        pred = model.predict(scaled_input)
+        print(pred)
+
+
 
     df = pd.DataFrame(dict(
         values = [8, 12, 7, 14, 10, 12, 8,
@@ -109,7 +145,7 @@ def update_output(n_clicks):
                     'Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías'],
         ham=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
                'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',  'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
-    print(df)
+    # print(df)
     fig = px.line_polar(df, r='values', theta='variable', line_close=True,
                         color='ham')
     fig.update_traces(fill='toself')
