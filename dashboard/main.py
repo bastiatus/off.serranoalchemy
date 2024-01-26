@@ -9,6 +9,7 @@ import numpy as np
 
 model = joblib.load('model.pkl')
 scaler = joblib.load('scaler.pkl')
+clusters = pd.read_pickle("clusters.pkl")
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
                 meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1.0'}])
@@ -114,16 +115,6 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
     if n_clicks is None or n_clicks == 0:
         return px.line_polar()
     else:
-        dict_ = {
-            "carbohydrates_100g": [carbohydrates],
-            "energy-kcal_100g": [calories],
-            "proteins_100g": [proteins],
-            "salt_100g": [salt],
-            "saturated-fat_100g": [saturated_fat],
-            "sugars_100g": [sugar],
-            "insaturated-fat_100g": [insaturated_fat]
-        }
-
         feature_names = ["carbohydrates_100g", "energy-kcal_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
                          "sugars_100g", "insaturated-fat_100g"]
 
@@ -133,18 +124,34 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
         scaled_input = scaler.transform(input_data)
         scaled_input = pd.DataFrame(scaled_input, columns=feature_names)
 
-        pred = model.predict(scaled_input)
+        pred = model.predict(scaled_input)[0]
+        most_similar_ham = clusters[clusters['cluster'] == pred]
+
+        original_values = scaler.inverse_transform(most_similar_ham.values)
+
         print(pred)
-
-
+        # print(original_values)
+        print(most_similar_ham)
 
     df = pd.DataFrame(dict(
-        values = [8, 12, 7, 14, 10, 12, 8,
-                  10, 3, 10, 10, 9, 13, 8],
-        variable = ['Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías',
-                    'Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías'],
+        values=[8, 12, 7, 14, 10, 12, 8,
+                10, 3, 10, 10, 9, 13, 8],
+        variable=feature_names*2,
         ham=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
-               'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',  'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
+             'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',
+             'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',
+             'Tipo de jamón más parecido']))
+
+    # df = pd.DataFrame(dict(
+    #     values = [8, 12, 7, 14, 10, 12, 8,
+    #               10, 3, 10, 10, 9, 13, 8],
+    #     variable = ['Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías',
+    #                 'Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías'],
+    #     ham=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
+    #            'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',  'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
+
+
+
     # print(df)
     fig = px.line_polar(df, r='values', theta='variable', line_close=True,
                         color='ham')
