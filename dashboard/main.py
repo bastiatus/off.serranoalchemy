@@ -23,70 +23,119 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col(
-            html.Label("Ingresar nutrientes del jamón:"),
-            width=3, style={'text-align': 'center', 'margin': 'auto'}
+            width=2, style={'text-align': 'right', 'margin': 'auto'}
         ),
 
         dbc.Col([
             dbc.Row([
-                dbc.Col(dcc.Input(
-                    id="calories".format("number"),
-                    type="number",
-                    placeholder="KiloCalorias".format("number")
-                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
+                dbc.Col([
+                    html.Div([
+                        html.Label("KiloCalorias"),
+                        dcc.Input(
+                            id="calories".format("number"),
+                            type="number",
+                            placeholder="200".format("number"),
+                            style={'width': '70%'}
+                        ),
+                    ], style={'display': 'flex', 'flexDirection': 'column'})
+                ], width=3, style={'margin': 'auto'}),
 
-                dbc.Col(dcc.Input(
-                    id="proteins".format("number"),
-                    type="number",
-                    placeholder="Proteinas".format("number")
-                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
+                dbc.Col([
+                    html.Div([
+                        html.Label("Proteinas"),
+                        dcc.Input(
+                            id="proteins".format("number"),
+                            type="number",
+                            placeholder="2".format("number"),
+                            style={'width': '70%'}
+                        ),
+                    ], style={'display': 'flex', 'flexDirection': 'column'})
+                ], width=3, style={'margin': 'auto'}),
 
-                dbc.Col(dcc.Input(
-                    id="carbohydrates".format("number"),
-                    type="number",
-                    placeholder="Carbohidratos".format("number")
-                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
+                dbc.Col([
+                    html.Div([
+                        html.Label("Carbohidratos"),
+                        dcc.Input(
+                            id="carbohydrates".format("number"),
+                            type="number",
+                            placeholder="15".format("number"),
+                            style={'width': '70%'}
+                        ),
+                    ], style={'display': 'flex', 'flexDirection': 'column'})
+                ], width=3, style={'margin': 'auto'}),
 
-                dbc.Col(dcc.Input(
-                    id="salt".format("number"),
-                    type="number",
-                    placeholder="Sal".format("number")
-                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
+                dbc.Col([
+                    html.Div([
+                        html.Label("Sal"),
+                        dcc.Input(
+                            id="salt".format("number"),
+                            type="number",
+                            placeholder="3".format("number"),
+                            style={'width': '70%'}
+                        ),
+                    ], style={'display': 'flex', 'flexDirection': 'column'})
+                ], width=3, style={'margin': 'auto'})
             ], style={'margin-bottom': '10px'}),
 
             dbc.Row([
-                dbc.Col(dcc.Input(
-                    id="sugar".format("number"),
-                    type="number",
-                    placeholder="Azucar".format("number")
-                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
+                dbc.Col([
+                    html.Div([
+                        html.Label("Azucar"),
+                        dcc.Input(
+                            id="sugar".format("number"),
+                            type="number",
+                            placeholder="5".format("number"),
+                            style={'width': '70%'}
+                        ),
+                    ], style={'display': 'flex', 'flexDirection': 'column'})
+                ], width=3, style={'margin': 'auto'}),
 
-                dbc.Col(dcc.Input(
-                    id="saturated_fat".format("number"),
-                    type="number",
-                    placeholder="Grasas saturadas".format("number")
-                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
+                dbc.Col([
+                    html.Div([
+                        html.Label("Grasas saturadas"),
+                        dcc.Input(
+                            id="saturated_fat".format("number"),
+                            type="number",
+                            placeholder="6".format("number"),
+                            style={'width': '70%'}
+                        ),
+                    ], style={'display': 'flex', 'flexDirection': 'column'})
+                ], width=3, style={'margin': 'auto'}),
 
-                dbc.Col(dcc.Input(
-                    id="insaturated_fat".format("number"),
-                    type="number",
-                    placeholder="Grasas insaturadas".format("number")
-                ), width=3, style={'text-align': 'center', 'margin': 'auto'}),
-                dbc.Col(width=3)
+                dbc.Col([
+                    html.Div([
+                        html.Label("Grasas insaturadas"),
+                        dcc.Input(
+                            id="insaturated_fat".format("number"),
+                            type="number",
+                            placeholder="9".format("number"),
+                            style={'width': '70%'}
+                        ),
+                    ], style={'display': 'flex', 'flexDirection': 'column'})
+                ], width=3, style={'margin': 'auto'}),
+
+                dbc.Col(width=3),
             ], style={'margin-bottom': '10px'})
-        ],
-        width=9),
+        ], width=8)
+
+        ,
+
+        dbc.Col(
+            width=2, style={'text-align': 'right', 'margin': 'auto'}
+        ),
+
+
     ], style={'margin-bottom': '10px'}),
 
     dbc.Row([
-        dbc.Col(width=3),
+        dbc.Col(width=2),
         dbc.Col(
             html.Div(
                 dbc.Button("Calcular", id="calculate-button", color="primary", className="d-grid gap-2"),
                 className="d-grid gap-2"
             ),
-            width=6),
-        dbc.Col(width=3)
+            width=8),
+        dbc.Col(width=2)
     ], style={'margin-bottom': '20px'}),
 
     dbc.Row([
@@ -117,8 +166,6 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
     else:
         feature_names = ["carbohydrates_100g", "energy-kcal_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
                          "sugars_100g", "insaturated-fat_100g"]
-        feature_names_without_kcal = ["carbohydrates_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
-                         "sugars_100g", "insaturated-fat_100g"]
 
         input_values = np.array([carbohydrates, calories, proteins, salt, saturated_fat, sugar, insaturated_fat])
         input_data = pd.DataFrame([input_values], columns=feature_names)
@@ -129,17 +176,14 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
         pred = model.predict(scaled_input)[0]
         most_similar_ham = clusters[clusters['cluster'] == pred][feature_names]
 
-        original_values = scaler.inverse_transform(most_similar_ham.values)
-        original_values_without_kcal = [list(original_values[0])[0]] + list(original_values[0])[2:]
-        input_data_without_kcal = list(input_data[["carbohydrates_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
-                                          "sugars_100g", "insaturated-fat_100g"]].values[0])
+        # original_values = scaler.inverse_transform(most_similar_ham.values)
 
     df = pd.DataFrame(dict(
-        values=input_data_without_kcal + original_values_without_kcal,
-        variable=feature_names_without_kcal*2,
-        jamones=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
+        values=list(scaled_input.values[0]) + list(most_similar_ham.values[0]),
+        variable=feature_names*2,
+        jamones=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
              'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',
-             'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
+             'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
 
     fig = px.line_polar(df, r='values', theta='variable', line_close=True, color='jamones')
     fig.update_traces(fill='toself')
