@@ -117,6 +117,8 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
     else:
         feature_names = ["carbohydrates_100g", "energy-kcal_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
                          "sugars_100g", "insaturated-fat_100g"]
+        feature_names_without_kcal = ["carbohydrates_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
+                         "sugars_100g", "insaturated-fat_100g"]
 
         input_values = np.array([carbohydrates, calories, proteins, salt, saturated_fat, sugar, insaturated_fat])
         input_data = pd.DataFrame([input_values], columns=feature_names)
@@ -125,36 +127,21 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
         scaled_input = pd.DataFrame(scaled_input, columns=feature_names)
 
         pred = model.predict(scaled_input)[0]
-        most_similar_ham = clusters[clusters['cluster'] == pred]
+        most_similar_ham = clusters[clusters['cluster'] == pred][feature_names]
 
         original_values = scaler.inverse_transform(most_similar_ham.values)
-
-        print(pred)
-        # print(original_values)
-        print(most_similar_ham)
+        original_values_without_kcal = [list(original_values[0])[0]] + list(original_values[0])[2:]
+        input_data_without_kcal = list(input_data[["carbohydrates_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
+                                          "sugars_100g", "insaturated-fat_100g"]].values[0])
 
     df = pd.DataFrame(dict(
-        values=[8, 12, 7, 14, 10, 12, 8,
-                10, 3, 10, 10, 9, 13, 8],
-        variable=feature_names*2,
-        ham=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
+        values=input_data_without_kcal + original_values_without_kcal,
+        variable=feature_names_without_kcal*2,
+        jamones=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
              'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',
-             'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',
-             'Tipo de jamón más parecido']))
+             'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
 
-    # df = pd.DataFrame(dict(
-    #     values = [8, 12, 7, 14, 10, 12, 8,
-    #               10, 3, 10, 10, 9, 13, 8],
-    #     variable = ['Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías',
-    #                 'Grasas insaturadas', 'Grasas saturadas', 'Sal', 'Carbohidratos', 'Azúcares', 'Proteinas', 'Kcalorías'],
-    #     ham=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
-    #            'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',  'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
-
-
-
-    # print(df)
-    fig = px.line_polar(df, r='values', theta='variable', line_close=True,
-                        color='ham')
+    fig = px.line_polar(df, r='values', theta='variable', line_close=True, color='jamones')
     fig.update_traces(fill='toself')
 
     return fig
