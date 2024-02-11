@@ -114,7 +114,17 @@ app.layout = dbc.Container([
                     ], style={'display': 'flex', 'flexDirection': 'column'})
                 ], width=3, style={'margin': 'auto'}),
 
-                dbc.Col(width=3),
+                dbc.Col([
+                    html.Div([
+                        html.Label("Precio €/Kg"),
+                        dcc.Input(
+                            id="price".format("number"),
+                            type="number",
+                            placeholder="9".format("number"),
+                            style={'width': '70%'}
+                        ),
+                    ], style={'display': 'flex', 'flexDirection': 'column'})
+                ], width=3, style={'margin': 'auto'}),
             ], style={'margin-bottom': '10px'})
         ], width=8)
 
@@ -131,7 +141,8 @@ app.layout = dbc.Container([
         dbc.Col(width=2),
         dbc.Col(
             html.Div(
-                dbc.Button("Calcular", id="calculate-button", color="primary", className="d-grid gap-2"),
+                dbc.Button("Calcular", id="calculate-button", color="primary", className="d-grid gap-2",
+                           disabled=True),
                 className="d-grid gap-2"
             ),
             width=8),
@@ -139,17 +150,43 @@ app.layout = dbc.Container([
     ], style={'margin-bottom': '20px'}),
 
     dbc.Row([
-        dbc.Col(width=3),
-        dbc.Col(
+        dbc.Row([
+            html.Div([
+                html.H5(id="dynamic-text"),
+            ], style={'text-align': 'center', 'margin': 'auto'})
+        ]),
+
+        dbc.Row([
             html.Div([
                 dcc.Graph(id="polar-chart"),
-            ], className="d-grid gap-2")),
-        dbc.Col(width=3)
+            ])
+        ])
     ])
 ])
 
 @app.callback(
-    Output("polar-chart", "figure"),
+    Output("calculate-button", "disabled"),
+    [
+        Input("calories", "value"),
+        Input("proteins", "value"),
+        Input("carbohydrates", "value"),
+        Input("salt", "value"),
+        Input("sugar", "value"),
+        Input("saturated_fat", "value"),
+        Input("insaturated_fat", "value"),
+        Input("price", "value"),
+    ],
+)
+def update_button_disabled(calories, proteins, carbohydrates, salt, sugar, saturated_fat, insaturated_fat, price):
+    if None in [calories, proteins, carbohydrates, salt, sugar, saturated_fat, insaturated_fat, price]:
+        return True
+    else:
+        return False
+
+
+@app.callback(
+    [Output("polar-chart", "figure"),
+     Output("dynamic-text", "children")],
     [Input("calculate-button", "n_clicks")],
      [State("calories", "value"),
      State("proteins", "value"),
@@ -157,12 +194,13 @@ app.layout = dbc.Container([
      State("salt", "value"),
      State("sugar", "value"),
      State("saturated_fat", "value"),
-     State("insaturated_fat", "value")
+     State("insaturated_fat", "value"),
+     State("price", "value"),
      ]
 )
-def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, saturated_fat, insaturated_fat):
+def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, saturated_fat, insaturated_fat, price):
     if n_clicks is None or n_clicks == 0:
-        return px.line_polar()
+        return px.line_polar(), ""
     else:
         feature_names = ["carbohydrates_100g", "energy-kcal_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
                          "sugars_100g", "insaturated-fat_100g"]
@@ -176,19 +214,18 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
         pred = model.predict(scaled_input)[0]
         most_similar_ham = clusters[clusters['cluster'] == pred][feature_names]
 
-        # original_values = scaler.inverse_transform(most_similar_ham.values)
+        df = pd.DataFrame(dict(
+            values=list(scaled_input.values[0]) + list(most_similar_ham.values[0]),
+            variable=feature_names*2,
+            jamones=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
+                 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',
+                 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
 
-    df = pd.DataFrame(dict(
-        values=list(scaled_input.values[0]) + list(most_similar_ham.values[0]),
-        variable=feature_names*2,
-        jamones=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
-             'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',
-             'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
+        fig = px.line_polar(df, r='values', theta='variable', line_close=True, color='jamones')
+        fig.update_traces(fill='toself')
 
-    fig = px.line_polar(df, r='values', theta='variable', line_close=True, color='jamones')
-    fig.update_traces(fill='toself')
-
-    return fig
+        return fig, (f"Tu jamón pertenece al cluster {pred}, por lo que ha sido detectado como JAMÓN DE BELLOTA, "
+                     f"con un precio medio de XX €/Kg")
 
 
 if __name__ == '__main__':
