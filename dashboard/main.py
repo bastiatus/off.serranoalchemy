@@ -30,7 +30,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     html.Div([
-                        html.Label("KiloCalorias"),
+                        html.Label("KCal"),
                         dcc.Input(
                             id="calories".format("number"),
                             type="number",
@@ -126,15 +126,11 @@ app.layout = dbc.Container([
                     ], style={'display': 'flex', 'flexDirection': 'column'})
                 ], width=3, style={'margin': 'auto'}),
             ], style={'margin-bottom': '10px'})
-        ], width=8)
-
-        ,
+        ], width=8),
 
         dbc.Col(
             width=2, style={'text-align': 'right', 'margin': 'auto'}
         ),
-
-
     ], style={'margin-bottom': '10px'}),
 
     dbc.Row([
@@ -150,17 +146,50 @@ app.layout = dbc.Container([
     ], style={'margin-bottom': '20px'}),
 
     dbc.Row([
-        dbc.Row([
-            html.Div([
-                html.H5(id="dynamic-text"),
-            ], style={'text-align': 'center', 'margin': 'auto'})
-        ]),
+        html.Div([
 
-        dbc.Row([
-            html.Div([
-                dcc.Graph(id="polar-chart"),
+            dbc.Row([
+                dbc.Col(width=4),
+                dbc.Col(
+                    [
+                    html.Div([
+                            html.H5("Tu jamón ha sido detectado con la siguiente composición:"),
+                            html.Ul([
+                                html.Li(id="serrano"),
+                                html.Li(id="cebo"),
+                                html.Li(id="bellota"),
+                                html.Li(id="otros")
+                            ]),
+
+                        ])
+                    ],
+                width=4),
+                dbc.Col(width=4),
+
+            ]),
+
+            dbc.Row([
+                dbc.Col(width=2),
+                dbc.Col([
+                    html.Div([
+                            html.H5(id="price-text")
+                        ], style={'text-align': 'center', 'margin': 'auto'})
+                    ], width=8),
+                dbc.Col(width=2),
+            ]),
+
+            dbc.Row([
+                dbc.Col(width=2),
+                dbc.Col([
+                    html.Div([
+                        dcc.Graph(id="polar-chart"),
+                    ])
+                ], width=8),
+                dbc.Col(width=2)
             ])
-        ])
+
+        ], id="container-results", hidden=True)
+
     ])
 ])
 
@@ -186,7 +215,13 @@ def update_button_disabled(calories, proteins, carbohydrates, salt, sugar, satur
 
 @app.callback(
     [Output("polar-chart", "figure"),
-     Output("dynamic-text", "children")],
+    Output("serrano", "children"),
+    Output("cebo", "children"),
+    Output("bellota", "children"),
+    Output("otros", "children"),
+    Output("price-text", "children"),
+
+     Output("container-results", "hidden")],
     [Input("calculate-button", "n_clicks")],
      [State("calories", "value"),
      State("proteins", "value"),
@@ -200,7 +235,7 @@ def update_button_disabled(calories, proteins, carbohydrates, salt, sugar, satur
 )
 def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, saturated_fat, insaturated_fat, price):
     if n_clicks is None or n_clicks == 0:
-        return px.line_polar(), ""
+        return px.line_polar(), "", "", "", "", "", True
     else:
         feature_names = ["carbohydrates_100g", "energy-kcal_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
                          "sugars_100g", "insaturated-fat_100g"]
@@ -225,6 +260,21 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
 
         pred = model.predict(scaled_input)[0]
         most_similar_ham = clusters[clusters['cluster'] == pred][feature_names]
+        most_similar_ham_price = round(clusters[clusters['cluster'] == pred]["price_100g"].values[0] * 10, 2)
+
+        percentages_hams = clusters[clusters['cluster'] == pred][["categoria_0.0", "categoria_1.0", "categoria_2.0",
+                                                                  "categoria_3.0"]]
+        percentages_hams = percentages_hams.rename(columns={
+            "categoria_0.0": "Otros",
+            "categoria_1.0": "Serrano",
+            "categoria_2.0": "De Cebo",
+            "categoria_3.0": "De Bellota"
+        })
+
+        percentages_hams = percentages_hams.multiply(100).round(0).astype(int)
+        percentages_hams["Otros"] = (100 - percentages_hams["Serrano"] - percentages_hams["De Cebo"] -
+                                     percentages_hams["De Bellota"])
+        percentages_hams = percentages_hams.to_dict(orient='records')[0]
 
         df = pd.DataFrame(dict(
             values=list(scaled_input.values[0]) + list(most_similar_ham.values[0]),
@@ -236,8 +286,26 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
         fig = px.line_polar(df, r='values', theta='variable', line_close=True, color='jamones')
         fig.update_traces(fill='toself')
 
-        return fig, (f"Tu jamón pertenece al cluster {pred}, por lo que ha sido detectado como JAMÓN DE BELLOTA, "
-                     f"con un precio medio de XX €/Kg")
+        text_price = ""
+        if price > most_similar_ham_price:
+            text_price = (f"El precio medio de este tipo de jamón es de {most_similar_ham_price} €/Kg, pero tu jamón "
+                          f"es de {price} €/Kg. Lo cual hace que se encuentre sobrevalorado, con "
+                          f"{round(price - most_similar_ham_price, 2)} €/Kg de diferencia.")
+        elif price < most_similar_ham_price:
+            text_price = (f"El precio medio de este tipo de jamón es de {most_similar_ham_price} €/Kg, pero tu jamón "
+                          f"es de {price} €/Kg. Lo cual hace que se encuentre infravalorado, con "
+                          f"{round(most_similar_ham_price - price, 2)} €/Kg de diferencia.")
+        else:
+            text_price = (f"El precio medio de este tipo de jamón es de {most_similar_ham_price} €/Kg, lo cual "
+                          f"coincide con el valor del jamón introducido.")
+
+        return (fig,
+                f"Serrano: {percentages_hams['Serrano']}%.",
+                f"De Cebo: {percentages_hams['De Cebo']}%.",
+                f"De Bellota: {percentages_hams['De Bellota']}%.",
+                f"Otros: {percentages_hams['Otros']}%.",
+                text_price,
+                False)
 
 
 if __name__ == '__main__':
