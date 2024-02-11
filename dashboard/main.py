@@ -80,7 +80,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     html.Div([
-                        html.Label("Azucar"),
+                        html.Label("Azúcar"),
                         dcc.Input(
                             id="sugar".format("number"),
                             type="number",
@@ -205,6 +205,18 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
         feature_names = ["carbohydrates_100g", "energy-kcal_100g", "proteins_100g", "salt_100g", "saturated-fat_100g",
                          "sugars_100g", "insaturated-fat_100g"]
 
+        feature_labels_dict = {
+            "carbohydrates_100g": "Carbohidratos",
+            "energy-kcal_100g": "KCal",
+            "proteins_100g": "Proteinas",
+            "salt_100g": "Sal",
+            "saturated-fat_100g": "Gasas Saturadas",
+            "sugars_100g": "Azúcar",
+            "insaturated-fat_100g": "Grasas Insaturadas"
+        }
+
+        feature_labels_list = [feature_labels_dict[x] for x in feature_names]
+
         input_values = np.array([carbohydrates, calories, proteins, salt, saturated_fat, sugar, insaturated_fat])
         input_data = pd.DataFrame([input_values], columns=feature_names)
 
@@ -216,7 +228,7 @@ def update_output(n_clicks, calories, proteins, carbohydrates, salt, sugar, satu
 
         df = pd.DataFrame(dict(
             values=list(scaled_input.values[0]) + list(most_similar_ham.values[0]),
-            variable=feature_names*2,
+            variable=feature_labels_list*2,
             jamones=['Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón', 'Tu jamón',
                  'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido',
                  'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido', 'Tipo de jamón más parecido']))
