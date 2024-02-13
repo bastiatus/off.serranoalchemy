@@ -14,6 +14,9 @@ clusters = pd.read_pickle("clusters.pkl")
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
                 meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1.0'}])
 
+# for server:
+server = app.server
+
 app.layout = dbc.Container([
     dbc.Row([
         dbc.Col(
